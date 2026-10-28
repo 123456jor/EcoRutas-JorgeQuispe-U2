@@ -24,7 +24,7 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
         val errores=p.validar(); if(errores.isNotEmpty()) throw ErrorApiException(ErrorApi.Validacion(errores,"Revisa los campos"))
         val permiso=if(id==null) "PESAJE_CREAR" else "PESAJE_EDITAR"
         if(permiso !in sesion.sesion.value!!.privilegios) throw ErrorApiException(ErrorApi.SinPrivilegio("No posee el privilegio requerido"))
-        if(q.rutas().executeAsList().firstOrNull { it.id==p.rutaId }?.estado!="ABIERTA") throw ErrorApiException(ErrorApi.Conflicto("La ruta está cerrada"))
+        if(q.rutas().executeAsList().firstOrNull { it.id==p.rutaId }?.estado=="CERRADA") throw ErrorApiException(ErrorApi.Conflicto("La ruta está cerrada"))
         var real=0L
         local.database.transaction {
             real=id ?: q.siguienteId { it ?: -1L }.executeAsOne()
