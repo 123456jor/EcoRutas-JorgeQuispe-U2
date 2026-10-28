@@ -35,6 +35,14 @@ class EcoOfflineTest {
     }
     @AfterTest fun tearDown()=driver.close()
     private fun form(bruto: Double=30.0)=FormularioPesaje(1,1,"Cartón",bruto,2.0,"Prueba")
+    @Test fun filtroPendientesCombinaBusquedaYAltaLocalSinRed()=runTest {
+        local.q.guardarPunto(1,2,"Otra empresa","Calle dos","Norte","Metal",2,false,"Cerrado")
+        assertEquals(1,repo.observarPuntos(1,"Empresa",true).first().size)
+        assertTrue(repo.observarPuntos(1,"inexistente",true).first().isEmpty())
+        api.sinRed=true;repo.guardar(form())
+        assertTrue(repo.observarPuntos(1,"Empresa",true).first().isEmpty())
+        assertEquals(2,repo.observarPuntos(1,"empresa",false).first().size)
+    }
     @Test fun conversionDtoConservaAnulacion() {
         val p=PesajeDto(5,1,1,"2026-10-28T12:00:00Z","Cartón",30.0,2.0,28.0,"operario1","ANULADO","Duplicado").dominio()
         assertEquals(EstadoPesaje.Anulado("Duplicado"),p.estado);assertEquals(28.0,p.pesoNeto);assertFalse(p.pendiente)
