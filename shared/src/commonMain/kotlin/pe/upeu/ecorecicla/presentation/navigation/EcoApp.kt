@@ -76,6 +76,7 @@ import pe.upeu.ecorecicla.domain.model.*
 @Composable private fun Etiqueta(texto: String) { Surface(color=VerdeClaro,shape=RoundedCornerShape(8.dp)) { Text(texto,Modifier.padding(horizontal=10.dp,vertical=5.dp),fontSize=11.sp,color=VerdeBosque) } }
 @Composable private fun RutaScreen(vm: EcoViewModel,busy: Boolean) {
     val ruta by vm.ruta.collectAsState(); val puntos by vm.puntos.collectAsState(); val busqueda by vm.busqueda.collectAsState(); val fecha by vm.fecha.collectAsState(); val sesion by vm.sesion.collectAsState()
+    val soloPendientes by vm.soloPendientes.collectAsState()
     var confirmar by remember { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
         item { Text("Tu recorrido de hoy",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold); Text("Recuperamos materiales. Cuidamos el futuro.",fontSize=13.sp,color=Color(0xFF617569)) }
@@ -86,7 +87,8 @@ import pe.upeu.ecorecicla.domain.model.*
             Text("Última sincronización: ${ruta?.ultimaSincronizacion?.let(::fechaLocal) ?: "Sin sincronizar"}",color=Color(0xFFD2E5D6),fontSize=11.sp)
         } } }
         item { OutlinedTextField(busqueda,{vm.busqueda.value=it},placeholder={Text("Buscar empresa o dirección")},modifier=Modifier.fillMaxWidth(),singleLine=true,shape=RoundedCornerShape(14.dp)) }
-        if(puntos.isEmpty()) item { Text(if(busy) "Consultando tu ruta…" else "No hay puntos para mostrar. Comprueba la fecha o sincroniza.",Modifier.padding(vertical=20.dp),color=Color(0xFF617569)) }
+        item { FilterChip(selected=soloPendientes,onClick={vm.soloPendientes.value=!soloPendientes},label={Text("Solo pendientes de pesar")}) }
+        if(puntos.isEmpty()) item { Text(if(busy) "Consultando tu ruta…" else "No hay puntos para mostrar. Comprueba la fecha, los filtros o sincroniza.",Modifier.padding(vertical=20.dp),color=Color(0xFF617569)) }
         items(puntos,key={it.id}) { punto -> Card(onClick={vm.abrir(punto)},colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(16.dp)) {
             Row(Modifier.fillMaxWidth().padding(16.dp),horizontalArrangement=Arrangement.spacedBy(14.dp)) {
                 Surface(color=VerdeClaro,shape=RoundedCornerShape(12.dp)) { Text(punto.secuencia.toString().padStart(2,'0'),Modifier.padding(12.dp),fontWeight=FontWeight.Bold,color=VerdeBosque) }

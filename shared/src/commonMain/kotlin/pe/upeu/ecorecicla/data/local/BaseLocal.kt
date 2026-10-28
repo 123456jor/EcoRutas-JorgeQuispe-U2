@@ -9,7 +9,7 @@ import pe.upeu.ecorecicla.data.remote.dto.*
 class BaseLocal(val database: EcoDatabase) {
     val q=database.ecoQueries
     fun rutas()=q.rutas().asFlow().mapToList(Dispatchers.Default)
-    fun puntos(ruta: Long,busqueda: String)=q.puntos(ruta,busqueda).asFlow().mapToList(Dispatchers.Default).map { rows -> rows.map { PuntoAcopio(it.id,it.razonSocial,it.direccion,it.zona,it.materialHabitual,it.secuencia.toInt(),it.atendido,it.motivoOmision) } }
+    fun puntos(ruta: Long,busqueda: String,soloPendientes: Boolean)=q.puntos(ruta,busqueda,if(soloPendientes) 1L else 0L).asFlow().mapToList(Dispatchers.Default).map { rows -> rows.map { PuntoAcopio(it.id,it.razonSocial,it.direccion,it.zona,it.materialHabitual,it.secuencia.toInt(),it.atendido,it.motivoOmision) } }
     fun pesajes(punto: Long)=q.pesajes(punto).asFlow().mapToList(Dispatchers.Default).map { rows -> rows.map { it.dominio() } }
     fun guardar(dto: PesajeDto) { val d=dto.dominio(); q.guardarPesaje(d.id,d.rutaId,d.puntoId,d.fechaHora,d.material,d.pesoBruto,d.tara,d.pesoNeto,d.operario,dto.estado,dto.motivoAnulacion,false,d.observacion,null) }
     fun limpiar()=database.transaction { q.borrarOperaciones(); q.borrarPesajes(); q.borrarPuntos(); q.borrarRutas() }

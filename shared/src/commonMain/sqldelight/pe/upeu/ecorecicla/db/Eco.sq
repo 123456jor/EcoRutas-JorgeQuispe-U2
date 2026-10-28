@@ -8,7 +8,7 @@ CREATE TABLE Operacion (orden INTEGER PRIMARY KEY AUTOINCREMENT,solicitudId TEXT
 rutas:
 SELECT * FROM RutaLocal ORDER BY ultimaSync DESC,id DESC;
 puntos:
-SELECT * FROM PuntoLocal WHERE rutaId=? AND (razonSocial LIKE '%' || :busqueda || '%' OR direccion LIKE '%' || :busqueda || '%') ORDER BY secuencia;
+SELECT * FROM PuntoLocal WHERE rutaId=:ruta AND (razonSocial LIKE '%' || :busqueda || '%' OR direccion LIKE '%' || :busqueda || '%') AND (:soloPendientes=0 OR (atendido=0 AND motivoOmision IS NULL AND NOT EXISTS (SELECT 1 FROM PesajeLocal p WHERE p.rutaId=PuntoLocal.rutaId AND p.puntoId=PuntoLocal.id AND p.estado='REGISTRADO'))) ORDER BY secuencia;
 pesajes:
 SELECT * FROM PesajeLocal WHERE puntoId=? ORDER BY fechaHora DESC,id DESC;
 pesaje:
