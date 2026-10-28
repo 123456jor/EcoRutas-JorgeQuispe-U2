@@ -76,6 +76,7 @@ import pe.upeu.ecorecicla.domain.model.*
 @Composable private fun Etiqueta(texto: String) { Surface(color=VerdeClaro,shape=RoundedCornerShape(8.dp)) { Text(texto,Modifier.padding(horizontal=10.dp,vertical=5.dp),fontSize=11.sp,color=VerdeBosque) } }
 @Composable private fun RutaScreen(vm: EcoViewModel,busy: Boolean) {
     val ruta by vm.ruta.collectAsState(); val puntos by vm.puntos.collectAsState(); val busqueda by vm.busqueda.collectAsState(); val fecha by vm.fecha.collectAsState(); val sesion by vm.sesion.collectAsState()
+    val pendientes by vm.pendientes.collectAsState()
     var confirmar by remember { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
         item { Text("Tu recorrido de hoy",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold); Text("Recuperamos materiales. Cuidamos el futuro.",fontSize=13.sp,color=Color(0xFF617569)) }
@@ -85,6 +86,7 @@ import pe.upeu.ecorecicla.domain.model.*
             Text(ruta?.let { "${it.fecha}  ·  ${it.estado.lowercase().replaceFirstChar { c -> c.uppercase() }}" } ?: "Sincroniza para descargar tu asignación",color=Color(0xFFD2E5D6),fontSize=13.sp)
             Text("Última sincronización: ${ruta?.ultimaSincronizacion?.let(::fechaLocal) ?: "Sin sincronizar"}",color=Color(0xFFD2E5D6),fontSize=11.sp)
         } } }
+        item { BadgedBox(badge={ Badge { Text(pendientes.toString()) } }) { Text("Pesajes por sincronizar",Modifier.padding(end=18.dp)) } }
         item { OutlinedTextField(busqueda,{vm.busqueda.value=it},placeholder={Text("Buscar empresa o dirección")},modifier=Modifier.fillMaxWidth(),singleLine=true,shape=RoundedCornerShape(14.dp)) }
         if(puntos.isEmpty()) item { Text(if(busy) "Consultando tu ruta…" else "No hay puntos para mostrar. Comprueba la fecha o sincroniza.",Modifier.padding(vertical=20.dp),color=Color(0xFF617569)) }
         items(puntos,key={it.id}) { punto -> Card(onClick={vm.abrir(punto)},colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(16.dp)) {

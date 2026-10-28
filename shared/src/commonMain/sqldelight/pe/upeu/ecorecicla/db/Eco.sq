@@ -17,6 +17,8 @@ siguienteId:
 SELECT min(coalesce(min(id),0),0)-1 FROM PesajeLocal;
 operaciones:
 SELECT * FROM Operacion ORDER BY orden;
+contarPendientes:
+SELECT count(DISTINCT p.id) FROM PesajeLocal p JOIN Operacion o ON o.pesajeId=p.id WHERE p.rutaId=:ruta;
 operacionesPesaje:
 SELECT count(*) FROM Operacion WHERE pesajeId=?;
 guardarRuta:

@@ -4,6 +4,7 @@ import pe.upeu.ecorecicla.domain.model.*
 data class ResumenSync(val enviados: Int,val recibidos: Int,val errores: List<String>,val campos: Map<String,String> = emptyMap(),val ids: Map<Long,Long> = emptyMap())
 interface EcoRepositorio {
     fun observarRuta(): Flow<Ruta?>
+    fun observarPendientes(ruta: Long): Flow<Long>
     fun observarPuntos(ruta: Long,busqueda: String): Flow<List<PuntoAcopio>>
     fun observarPesajes(punto: Long): Flow<List<Pesaje>>
     suspend fun guardar(p: FormularioPesaje,id: Long? = null): Long
