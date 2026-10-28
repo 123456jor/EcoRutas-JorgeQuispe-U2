@@ -10,7 +10,7 @@ import pe.upeu.ecorecicla.data.repository.GestorSesion
 import pe.upeu.ecorecicla.domain.model.*
 import pe.upeu.ecorecicla.domain.repository.*
 import pe.upeu.ecorecicla.domain.usecase.SincronizarUseCase
-data class FormularioUi(val material: String="",val bruto: String="",val tara: String="",val observacion: String="",val errores: Map<String,String> = emptyMap())
+data class FormularioUi(val material: String="",val bruto: String="",val tara: String="",val observacion: String="",val humedad: String="0",val errores: Map<String,String> = emptyMap())
 @OptIn(ExperimentalCoroutinesApi::class)
 class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,private val gestor: GestorSesion,private val sync: SincronizarUseCase,conectividad: Conectividad): ViewModel() {
     val sesion=gestor.sesion
@@ -58,15 +58,15 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     fun abrir(punto: PuntoAcopio) { seleccionado.value=punto; pantalla.value="detalle"; mensaje.value=null }
     fun formulario(pesaje: Pesaje?=null) {
         editandoId=pesaje?.id; editandoRutaId=pesaje?.rutaId
-        formulario.value=pesaje?.let { FormularioUi(it.material,it.pesoBruto.toString(),it.tara.toString(),it.observacion) } ?: FormularioUi(material=seleccionado.value?.materialHabitual.orEmpty())
+        formulario.value=pesaje?.let { FormularioUi(it.material,it.pesoBruto.toString(),it.tara.toString(),it.observacion,it.humedadEstimada.toString()) } ?: FormularioUi(material=seleccionado.value?.materialHabitual.orEmpty())
         mensaje.value=null; pantalla.value="formulario"
     }
     fun cambiar(campo: String,valor: String) { formulario.value=formulario.value.let {
-        when(campo) { "material" -> it.copy(material=valor); "pesoBruto" -> it.copy(bruto=valor); "tara" -> it.copy(tara=valor); else -> it.copy(observacion=valor) }.copy(errores=it.errores-campo)
+        when(campo) { "material" -> it.copy(material=valor); "pesoBruto" -> it.copy(bruto=valor); "tara" -> it.copy(tara=valor); "humedadEstimada" -> it.copy(humedad=valor); else -> it.copy(observacion=valor) }.copy(errores=it.errores-campo)
     } }
     fun guardar()=ejecutar {
         val f=formulario.value; val r=ruta.value ?: return@ejecutar; val punto=seleccionado.value ?: return@ejecutar
-        val data=FormularioPesaje(editandoRutaId ?: r.id,punto.id,f.material,f.bruto.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.tara.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.observacion)
+        val data=FormularioPesaje(editandoRutaId ?: r.id,punto.id,f.material,f.bruto.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.tara.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.observacion,f.humedad.replace(',', '.').toDoubleOrNull() ?: Double.NaN)
         editandoId=repo.guardar(data,editandoId)
         var pendiente=true
         if(conectado.value) {

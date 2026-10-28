@@ -112,6 +112,7 @@ import pe.upeu.ecorecicla.domain.model.*
             Text(if(p.pendiente) "Neto estimado: ${p.pesoBruto-p.tara} kg" else "${p.pesoNeto} kg netos",fontWeight=FontWeight.Bold,fontSize=20.sp)
             Text("Bruto ${p.pesoBruto} kg  ·  Tara ${p.tara} kg",fontSize=12.sp)
             Text("ID ${p.id} · ${fechaLocal(p.fechaHora)}",fontSize=11.sp,color=Color(0xFF617569)); Text("Registrado por ${p.operario}",fontSize=11.sp,color=Color(0xFF617569))
+            Text("Humedad estimada: ${p.humedadEstimada} %",fontSize=12.sp)
             if(p.observacion.isNotBlank()) Text(p.observacion,fontSize=12.sp)
             (p.estado as? EstadoPesaje.Anulado)?.let { Text("Motivo: ${it.motivo}",fontSize=12.sp,color=MaterialTheme.colorScheme.error) }
             p.errorSincronizacion?.let { Text(it,color=MaterialTheme.colorScheme.error,fontSize=12.sp) }
@@ -129,8 +130,8 @@ import pe.upeu.ecorecicla.domain.model.*
         Text("Datos del pesaje",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
         Text("El peso neto definitivo lo calcula EcoAPI.",color=Color(0xFF617569),fontSize=13.sp)
         if(!online) Etiqueta("Se guardará pendiente en este dispositivo")
-        listOf(Triple("material","Material",f.material),Triple("pesoBruto","Peso bruto (kg)",f.bruto),Triple("tara","Tara (kg)",f.tara),Triple("observacion","Observación",f.observacion)).forEach { (campo,label,valor) ->
-            OutlinedTextField(valor,{vm.cambiar(campo,it)},label={Text(label)},isError=campo in f.errores,supportingText={f.errores[campo]?.let {Text(it)}},keyboardOptions=KeyboardOptions(keyboardType=if(campo in listOf("pesoBruto","tara")) KeyboardType.Decimal else KeyboardType.Text),modifier=Modifier.fillMaxWidth(),enabled=!busy,singleLine=campo!="observacion",shape=RoundedCornerShape(14.dp))
+        listOf(Triple("material","Material",f.material),Triple("pesoBruto","Peso bruto (kg)",f.bruto),Triple("tara","Tara (kg)",f.tara),Triple("humedadEstimada","Humedad estimada (%)",f.humedad),Triple("observacion","Observación",f.observacion)).forEach { (campo,label,valor) ->
+            OutlinedTextField(valor,{vm.cambiar(campo,it)},label={Text(label)},isError=campo in f.errores,supportingText={f.errores[campo]?.let {Text(it)}},keyboardOptions=KeyboardOptions(keyboardType=if(campo in listOf("pesoBruto","tara","humedadEstimada")) KeyboardType.Decimal else KeyboardType.Text),modifier=Modifier.fillMaxWidth(),enabled=!busy,singleLine=campo!="observacion",shape=RoundedCornerShape(14.dp))
         }
         val bruto=f.bruto.replace(',','.').toDoubleOrNull(); val tara=f.tara.replace(',','.').toDoubleOrNull()
         if(bruto!=null && tara!=null) Text("Referencia local: ${bruto-tara} kg (estimación)",fontSize=13.sp,color=VerdeBosque)

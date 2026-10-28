@@ -2,7 +2,7 @@ import kotlin.Boolean;
 
 CREATE TABLE RutaLocal (id INTEGER NOT NULL PRIMARY KEY,fecha TEXT NOT NULL,estado TEXT NOT NULL,ultimaSync TEXT);
 CREATE TABLE PuntoLocal (rutaId INTEGER NOT NULL,id INTEGER NOT NULL,razonSocial TEXT NOT NULL,direccion TEXT NOT NULL,zona TEXT NOT NULL,materialHabitual TEXT NOT NULL,secuencia INTEGER NOT NULL,atendido INTEGER AS Boolean NOT NULL,motivoOmision TEXT,PRIMARY KEY(rutaId,id));
-CREATE TABLE PesajeLocal (id INTEGER NOT NULL PRIMARY KEY,rutaId INTEGER NOT NULL,puntoId INTEGER NOT NULL,fechaHora TEXT NOT NULL,material TEXT NOT NULL,pesoBruto REAL NOT NULL,tara REAL NOT NULL,pesoNeto REAL NOT NULL,operario TEXT NOT NULL,estado TEXT NOT NULL,motivo TEXT,pendiente INTEGER AS Boolean NOT NULL,observacion TEXT NOT NULL,error TEXT);
+CREATE TABLE PesajeLocal (id INTEGER NOT NULL PRIMARY KEY,rutaId INTEGER NOT NULL,puntoId INTEGER NOT NULL,fechaHora TEXT NOT NULL,material TEXT NOT NULL,pesoBruto REAL NOT NULL,tara REAL NOT NULL,pesoNeto REAL NOT NULL,operario TEXT NOT NULL,estado TEXT NOT NULL,motivo TEXT,pendiente INTEGER AS Boolean NOT NULL,observacion TEXT NOT NULL,error TEXT,humedadEstimada REAL NOT NULL DEFAULT 0);
 CREATE TABLE Operacion (orden INTEGER PRIMARY KEY AUTOINCREMENT,solicitudId TEXT NOT NULL UNIQUE,pesajeId INTEGER NOT NULL,tipo TEXT NOT NULL,payload TEXT NOT NULL,error TEXT);
 
 rutas:
@@ -24,7 +24,7 @@ INSERT OR REPLACE INTO RutaLocal VALUES (?,?,?,?);
 guardarPunto:
 INSERT OR REPLACE INTO PuntoLocal VALUES (?,?,?,?,?,?,?,?,?);
 guardarPesaje:
-INSERT OR REPLACE INTO PesajeLocal VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+INSERT OR REPLACE INTO PesajeLocal VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 encolar:
 INSERT INTO Operacion(solicitudId,pesajeId,tipo,payload) VALUES (?,?,?,?);
 borrarOperacion:
