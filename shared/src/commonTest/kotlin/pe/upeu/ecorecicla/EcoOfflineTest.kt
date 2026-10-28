@@ -34,7 +34,7 @@ class EcoOfflineTest {
         api=ApiPrueba();repo=EcoRepositorioOffline(local,api,session,plataforma)
     }
     @AfterTest fun tearDown()=driver.close()
-    private fun form(bruto: Double=30.0)=FormularioPesaje(1,1,"Cartón",bruto,2.0,"Prueba")
+    private fun form(bruto: Double=30.0)=FormularioPesaje(1,1,"Cartón",bruto,2.0,"Prueba",12.5)
     @Test fun filtroPendientesCombinaBusquedaYAltaLocalSinRed()=runTest {
         local.q.guardarPunto(1,2,"Otra empresa","Calle dos","Norte","Metal",2,false,"Cerrado")
         assertEquals(1,repo.observarPuntos(1,"Empresa",true).first().size)
@@ -42,6 +42,18 @@ class EcoOfflineTest {
         api.sinRed=true;repo.guardar(form())
         assertTrue(repo.observarPuntos(1,"Empresa",true).first().isEmpty())
         assertEquals(2,repo.observarPuntos(1,"empresa",false).first().size)
+    }
+    @Test fun humedadSeValidaYPersisteAlSincronizar()=runTest {
+        assertTrue(form().copy(humedadEstimada=-1.0).validar().containsKey("humedadEstimada"))
+        assertTrue(form().copy(humedadEstimada=101.0).validar().containsKey("humedadEstimada"))
+        assertTrue(form().copy(humedadEstimada=12.555).validar().containsKey("humedadEstimada"))
+        val id=repo.guardar(form())
+        assertEquals(12.5,repo.observarPesajes(1).first().single().humedadEstimada)
+        val payload=kotlinx.serialization.json.Json.decodeFromString<EscrituraPesajeDto>(local.q.operaciones().executeAsList().single().payload)
+        assertEquals(12.5,payload.humedadEstimada)
+        repo.sincronizar("2026-10-28")
+        assertNull(local.q.pesaje(id).executeAsOneOrNull())
+        assertEquals(12.5,repo.observarPesajes(1).first().single().humedadEstimada)
     }
     @Test fun conversionDtoConservaAnulacion() {
         val p=PesajeDto(5,1,1,"2026-10-28T12:00:00Z","Cartón",30.0,2.0,28.0,"operario1","ANULADO","Duplicado").dominio()
@@ -121,7 +133,7 @@ class EcoOfflineTest {
             eventos.add("crear")
             if(sinRed) throw ErrorApiException(ErrorApi.SinConexion())
             if(rechazar) throw ErrorApiException(ErrorApi.SinPrivilegio("No autorizado"))
-            val p=creados.getOrPut(dto.solicitudId) {PesajeDto(100L+creados.size,dto.rutaId,dto.puntoId,"2026-10-28T12:00:00Z",dto.material,dto.pesoBruto,dto.tara,dto.pesoBruto-dto.tara,"operario1","REGISTRADO",observacion=dto.observacion)}
+            val p=creados.getOrPut(dto.solicitudId) {PesajeDto(100L+creados.size,dto.rutaId,dto.puntoId,"2026-10-28T12:00:00Z",dto.material,dto.pesoBruto,dto.tara,dto.pesoBruto-dto.tara,"operario1","REGISTRADO",observacion=dto.observacion,humedadEstimada=dto.humedadEstimada)}
             if(perderRespuesta) throw ErrorApiException(ErrorApi.SinConexion())
             return p
         }

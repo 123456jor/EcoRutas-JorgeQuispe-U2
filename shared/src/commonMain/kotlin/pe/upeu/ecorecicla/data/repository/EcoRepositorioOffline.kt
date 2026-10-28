@@ -31,7 +31,7 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
             val old=id?.let { q.pesaje(it).executeAsOneOrNull() }
             if(id!=null && old==null) throw ErrorApiException(ErrorApi.NoEncontrado("Pesaje no encontrado"))
             val solicitud=plataforma.nuevoId()
-            q.guardarPesaje(real,p.rutaId,p.puntoId,old?.fechaHora ?: plataforma.ahora(),p.material,p.pesoBruto,p.tara,old?.pesoNeto ?: 0.0,old?.operario ?: sesion.sesion.value!!.usuario,old?.estado ?: "REGISTRADO",old?.motivo,true,p.observacion,null)
+            q.guardarPesaje(real,p.rutaId,p.puntoId,old?.fechaHora ?: plataforma.ahora(),p.material,p.pesoBruto,p.tara,old?.pesoNeto ?: 0.0,old?.operario ?: sesion.sesion.value!!.usuario,old?.estado ?: "REGISTRADO",old?.motivo,true,p.observacion,null,p.humedadEstimada)
             // La operación original queda inmutable, incluso si se perdió su respuesta.
             // Una edición posterior se encola y sigue al alta usando la referencia provisional.
             val rechazada=q.operaciones().executeAsList().firstOrNull { it.pesajeId==real && it.error?.startsWith("RECHAZADO:")==true }
@@ -98,7 +98,7 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
         val old=q.pesaje(id).executeAsOneOrNull() ?: throw ErrorApiException(ErrorApi.NoEncontrado("Pesaje no encontrado"))
         if(old.pendiente) throw ErrorApiException(ErrorApi.Conflicto("Sincroniza el pesaje antes de anularlo"))
         api.anular(id,motivo)
-        q.guardarPesaje(old.id,old.rutaId,old.puntoId,old.fechaHora,old.material,old.pesoBruto,old.tara,old.pesoNeto,old.operario,"ANULADO",motivo,false,old.observacion,null)
+        q.guardarPesaje(old.id,old.rutaId,old.puntoId,old.fechaHora,old.material,old.pesoBruto,old.tara,old.pesoNeto,old.operario,"ANULADO",motivo,false,old.observacion,null,old.humedadEstimada)
         Unit
     }
     override suspend fun omitir(ruta: Long,punto: Long,motivo: String) { mutex.withLock { vigente(); api.omitir(ruta,punto,motivo) } }
