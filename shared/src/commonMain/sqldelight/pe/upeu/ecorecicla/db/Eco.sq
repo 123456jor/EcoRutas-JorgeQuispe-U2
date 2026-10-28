@@ -6,7 +6,7 @@ CREATE TABLE PesajeLocal (id INTEGER NOT NULL PRIMARY KEY,rutaId INTEGER NOT NUL
 CREATE TABLE Operacion (orden INTEGER PRIMARY KEY AUTOINCREMENT,solicitudId TEXT NOT NULL UNIQUE,pesajeId INTEGER NOT NULL,tipo TEXT NOT NULL,payload TEXT NOT NULL,error TEXT);
 
 rutas:
-SELECT * FROM RutaLocal ORDER BY fecha DESC,id DESC;
+SELECT * FROM RutaLocal ORDER BY ultimaSync DESC,id DESC;
 puntos:
 SELECT * FROM PuntoLocal WHERE rutaId=? AND (razonSocial LIKE '%' || :busqueda || '%' OR direccion LIKE '%' || :busqueda || '%') ORDER BY secuencia;
 pesajes:
@@ -49,3 +49,6 @@ borrarRutas:
 DELETE FROM RutaLocal;
 borrarOperaciones:
 DELETE FROM Operacion;
+
+repararOperacion:
+UPDATE Operacion SET payload=?,error=NULL WHERE solicitudId=?;

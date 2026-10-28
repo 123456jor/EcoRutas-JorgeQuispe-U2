@@ -81,6 +81,14 @@ class EcoOfflineTest {
         assertEquals(1,result.errores.size);assertNotNull(session.sesion.value)
         assertTrue(local.q.pesaje(id).executeAsOne().pendiente);assertNotNull(local.q.operaciones().executeAsList().single().error)
     }
+    @Test fun correccionReparaRechazoConfirmadoSinDuplicarCola()=runTest {
+        val id=repo.guardar(form());api.rechazar=true;repo.sincronizar("2026-10-28")
+        repo.guardar(form(50.0),id)
+        assertEquals(1,local.q.operaciones().executeAsList().size)
+        assertNull(local.q.operaciones().executeAsList().single().error)
+        api.rechazar=false;repo.sincronizar("2026-10-28")
+        assertEquals(48.0,local.q.pesaje(100).executeAsOne().pesoNeto)
+    }
     @Test fun consultaObservableSeActualizaYLogoutLimpiaTurno()=runTest {
         assertTrue(repo.observarPesajes(1).first().isEmpty())
         repo.guardar(form());assertEquals(1,repo.observarPesajes(1).first().size)

@@ -34,7 +34,9 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
             q.guardarPesaje(real,p.rutaId,p.puntoId,old?.fechaHora ?: plataforma.ahora(),p.material,p.pesoBruto,p.tara,old?.pesoNeto ?: 0.0,old?.operario ?: sesion.sesion.value!!.usuario,old?.estado ?: "REGISTRADO",old?.motivo,true,p.observacion,null)
             // La operación original queda inmutable, incluso si se perdió su respuesta.
             // Una edición posterior se encola y sigue al alta usando la referencia provisional.
-            q.encolar(solicitud,real,if(id==null) "CREAR" else "EDITAR",Json.encodeToString(p.dto(solicitud)))
+            val rechazada=q.operaciones().executeAsList().firstOrNull { it.pesajeId==real && it.error?.startsWith("RECHAZADO:")==true }
+            if(rechazada!=null) q.repararOperacion(Json.encodeToString(p.dto(rechazada.solicitudId)),rechazada.solicitudId)
+            else q.encolar(solicitud,real,if(id==null) "CREAR" else "EDITAR",Json.encodeToString(p.dto(solicitud)))
         }
         real
     }
@@ -42,6 +44,8 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
         vigente()
         var enviados=0; var recibidos=0
         val errores=mutableListOf<String>()
+        val campos=mutableMapOf<String,String>()
+        val ids=mutableMapOf<Long,Long>()
         val bloqueados=mutableSetOf<Long>()
         val solicitudes=q.operaciones().executeAsList().map { it.solicitudId }
         for(solicitud in solicitudes) {
@@ -58,12 +62,16 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
                     }
                     if(q.operacionesPesaje(result.id).executeAsOne()==0L) local.guardar(result)
                 }
+                ids[op.pesajeId]=result.id
                 enviados++
             } catch(e: ErrorApiException) {
                 if(e.error is ErrorApi.NoAutorizado) throw e
-                local.database.transaction { q.errorOperacion(e.message,solicitud); q.errorPesaje(e.message,op.pesajeId) }
+                val definitivo=e.error is ErrorApi.Validacion || e.error is ErrorApi.SinPrivilegio || e.error is ErrorApi.Conflicto || e.error is ErrorApi.NoEncontrado
+                val detalle=if(definitivo) "RECHAZADO: ${e.message}" else e.message
+                local.database.transaction { q.errorOperacion(detalle,solicitud); q.errorPesaje(e.message,op.pesajeId) }
+                (e.error as? ErrorApi.Validacion)?.let { campos.putAll(it.campos) }
                 errores.add(e.error.mensaje); bloqueados.add(op.pesajeId)
-                if(e.error is ErrorApi.SinConexion || e.error is ErrorApi.TiempoAgotado) return@withLock ResumenSync(enviados,recibidos,errores)
+                if(e.error is ErrorApi.SinConexion || e.error is ErrorApi.TiempoAgotado) return@withLock ResumenSync(enviados,recibidos,errores,campos,ids)
             }
         }
         // Solo después de procesar la cola se descarga y se actualiza la fuente local.
@@ -83,7 +91,7 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
             remotos.forEach { dto -> if(q.pesaje(dto.id).executeAsOneOrNull()?.pendiente!=true) local.guardar(dto) }
         }
         recibidos=ruta.puntos.size+remotos.size
-        ResumenSync(enviados,recibidos,errores)
+        ResumenSync(enviados,recibidos,errores,campos,ids)
     }
     override suspend fun anular(id: Long,motivo: String)=mutex.withLock {
         vigente()

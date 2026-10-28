@@ -1,7 +1,7 @@
 package pe.upeu.ecorecicla.domain.repository
 import kotlinx.coroutines.flow.Flow
 import pe.upeu.ecorecicla.domain.model.*
-data class ResumenSync(val enviados: Int,val recibidos: Int,val errores: List<String>)
+data class ResumenSync(val enviados: Int,val recibidos: Int,val errores: List<String>,val campos: Map<String,String> = emptyMap(),val ids: Map<Long,Long> = emptyMap())
 interface EcoRepositorio {
     fun observarRuta(): Flow<Ruta?>
     fun observarPuntos(ruta: Long,busqueda: String): Flow<List<PuntoAcopio>>
