@@ -1,0 +1,17 @@
+Jorge Quispe — resultados reales
+Comando: ./gradlew.bat :shared:jvmTest
+Ejecutadas: 9
+Fallidas: 0
+Errores: 0
+BUILD SUCCESSFUL
+Reporte: shared/build/test-results/jvmTest/TEST-pe.upeu.ecorecicla.EcoOfflineTest.xml
+
+rechazo403ConservaOperacionYNoCierraSesion[jvm]
+registroSinRedUsaSqlDelightIdNegativoYMarcaPendiente[jvm]
+erroresHttpDistinguenValidacion401403409[jvm]
+conversionDtoConservaAnulacion[jvm]
+sincronizacionSubeAntesDeDescargarYSustituyeEnTransaccion[jvm]
+respuestaPerdidaYEdicionPosteriorNoDuplicanNiPierdenDatos[jvm]
+http204NoIntentaDeserializarYCabeceraEsCentral[jvm]
+consultaObservableSeActualizaYLogoutLimpiaTurno[jvm]
+correccionReparaRechazoConfirmadoSinDuplicarCola[jvm]

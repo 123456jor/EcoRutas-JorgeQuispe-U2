@@ -1,0 +1,54 @@
+import kotlin.Boolean;
+
+CREATE TABLE RutaLocal (id INTEGER NOT NULL PRIMARY KEY,fecha TEXT NOT NULL,estado TEXT NOT NULL,ultimaSync TEXT);
+CREATE TABLE PuntoLocal (rutaId INTEGER NOT NULL,id INTEGER NOT NULL,razonSocial TEXT NOT NULL,direccion TEXT NOT NULL,zona TEXT NOT NULL,materialHabitual TEXT NOT NULL,secuencia INTEGER NOT NULL,atendido INTEGER AS Boolean NOT NULL,motivoOmision TEXT,PRIMARY KEY(rutaId,id));
+CREATE TABLE PesajeLocal (id INTEGER NOT NULL PRIMARY KEY,rutaId INTEGER NOT NULL,puntoId INTEGER NOT NULL,fechaHora TEXT NOT NULL,material TEXT NOT NULL,pesoBruto REAL NOT NULL,tara REAL NOT NULL,pesoNeto REAL NOT NULL,operario TEXT NOT NULL,estado TEXT NOT NULL,motivo TEXT,pendiente INTEGER AS Boolean NOT NULL,observacion TEXT NOT NULL,error TEXT);
+CREATE TABLE Operacion (orden INTEGER PRIMARY KEY AUTOINCREMENT,solicitudId TEXT NOT NULL UNIQUE,pesajeId INTEGER NOT NULL,tipo TEXT NOT NULL,payload TEXT NOT NULL,error TEXT);
+
+rutas:
+SELECT * FROM RutaLocal ORDER BY ultimaSync DESC,id DESC;
+puntos:
+SELECT * FROM PuntoLocal WHERE rutaId=? AND (razonSocial LIKE '%' || :busqueda || '%' OR direccion LIKE '%' || :busqueda || '%') ORDER BY secuencia;
+pesajes:
+SELECT * FROM PesajeLocal WHERE puntoId=? ORDER BY fechaHora DESC,id DESC;
+pesaje:
+SELECT * FROM PesajeLocal WHERE id=?;
+siguienteId:
+SELECT min(coalesce(min(id),0),0)-1 FROM PesajeLocal;
+operaciones:
+SELECT * FROM Operacion ORDER BY orden;
+operacionesPesaje:
+SELECT count(*) FROM Operacion WHERE pesajeId=?;
+guardarRuta:
+INSERT OR REPLACE INTO RutaLocal VALUES (?,?,?,?);
+guardarPunto:
+INSERT OR REPLACE INTO PuntoLocal VALUES (?,?,?,?,?,?,?,?,?);
+guardarPesaje:
+INSERT OR REPLACE INTO PesajeLocal VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+encolar:
+INSERT INTO Operacion(solicitudId,pesajeId,tipo,payload) VALUES (?,?,?,?);
+borrarOperacion:
+DELETE FROM Operacion WHERE solicitudId=?;
+reemplazarReferencias:
+UPDATE Operacion SET pesajeId=:definitivo WHERE pesajeId=:provisional;
+reemplazarId:
+UPDATE PesajeLocal SET id=:definitivo WHERE id=:provisional;
+errorOperacion:
+UPDATE Operacion SET error=? WHERE solicitudId=?;
+errorPesaje:
+UPDATE PesajeLocal SET error=? WHERE id=?;
+limpiarErrores:
+UPDATE Operacion SET error=NULL WHERE pesajeId=?;
+borrarPuntosRuta:
+DELETE FROM PuntoLocal WHERE rutaId=?;
+borrarPesajes:
+DELETE FROM PesajeLocal;
+borrarPuntos:
+DELETE FROM PuntoLocal;
+borrarRutas:
+DELETE FROM RutaLocal;
+borrarOperaciones:
+DELETE FROM Operacion;
+
+repararOperacion:
+UPDATE Operacion SET payload=?,error=NULL WHERE solicitudId=?;
