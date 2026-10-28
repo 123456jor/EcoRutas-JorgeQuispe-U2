@@ -26,7 +26,7 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     val pesajes=seleccionado.flatMapLatest { p -> if(p==null) flowOf(emptyList()) else repo.observarPesajes(p.id) }.stateIn(viewModelScope,SharingStarted.Eagerly,emptyList())
     val formulario=MutableStateFlow(FormularioUi())
     val resumen=MutableStateFlow<ResumenSync?>(null)
-    private var editando: Pesaje?=null
+    private var editandoId: Long?=null
     init {
         gestor.restaurar()
         viewModelScope.launch {
@@ -56,7 +56,7 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     fun sincronizar()=ejecutar { resumen.value=sync(fecha.value); mensaje.value=resumen.value!!.errores.firstOrNull() ?: "Sincronización completada" }
     fun abrir(punto: PuntoAcopio) { seleccionado.value=punto; pantalla.value="detalle"; mensaje.value=null }
     fun formulario(pesaje: Pesaje?=null) {
-        editando=pesaje
+        editandoId=pesaje?.id
         formulario.value=pesaje?.let { FormularioUi(it.material,it.pesoBruto.toString(),it.tara.toString(),it.observacion) } ?: FormularioUi(material=seleccionado.value?.materialHabitual.orEmpty())
         mensaje.value=null; pantalla.value="formulario"
     }
@@ -66,12 +66,20 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     fun guardar()=ejecutar {
         val f=formulario.value; val r=ruta.value ?: return@ejecutar; val punto=seleccionado.value ?: return@ejecutar
         val data=FormularioPesaje(r.id,punto.id,f.material,f.bruto.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.tara.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.observacion)
-        repo.guardar(data,editando?.id)
+        editandoId=repo.guardar(data,editandoId)
+        var pendiente=true
         if(conectado.value) {
-            val result=sync(fecha.value); resumen.value=result
-            if(result.errores.isNotEmpty()) { mensaje.value=result.errores.first(); return@ejecutar }
+            try {
+                val result=sync(fecha.value); resumen.value=result
+                editandoId=result.ids[editandoId] ?: editandoId
+                if(result.campos.isNotEmpty()) { formulario.value=f.copy(errores=result.campos); mensaje.value=result.errores.firstOrNull(); return@ejecutar }
+                pendiente=result.errores.isNotEmpty()
+            } catch(e: ErrorApiException) {
+                if(e.error is ErrorApi.NoAutorizado) throw e
+                mensaje.value=e.error.mensaje
+            }
         }
-        pantalla.value="detalle"; mensaje.value=if(conectado.value) "Pesaje guardado y sincronizado" else "Pesaje guardado en el dispositivo. Pendiente de envío."
+        pantalla.value="detalle"; mensaje.value=if(!pendiente) "Pesaje guardado y sincronizado" else "Pesaje guardado en el dispositivo. Pendiente de envío."
     }
     fun anular(id: Long,motivo: String)=ejecutar { repo.anular(id,motivo); sync(fecha.value); mensaje.value="Pesaje anulado" }
     fun omitir(motivo: String)=ejecutar { repo.omitir(ruta.value!!.id,seleccionado.value!!.id,motivo); sync(fecha.value); mensaje.value="Motivo de omisión registrado" }

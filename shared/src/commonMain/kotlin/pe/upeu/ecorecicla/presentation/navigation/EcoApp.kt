@@ -1,4 +1,5 @@
 package pe.upeu.ecorecicla.presentation.navigation
+import kotlinx.datetime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -82,7 +83,7 @@ import pe.upeu.ecorecicla.domain.model.*
         item { Card(colors=CardDefaults.cardColors(containerColor=VerdeBosque),shape=RoundedCornerShape(20.dp)) { Column(Modifier.fillMaxWidth().padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
             Text(if(ruta==null) "Sin ruta disponible" else "RUTA #${ruta!!.id}",color=Color.White,fontWeight=FontWeight.Bold,fontSize=18.sp)
             Text(ruta?.let { "${it.fecha}  ·  ${it.estado.lowercase().replaceFirstChar { c -> c.uppercase() }}" } ?: "Sincroniza para descargar tu asignación",color=Color(0xFFD2E5D6),fontSize=13.sp)
-            Text("Última sincronización: ${ruta?.ultimaSincronizacion?.replace('T',' ')?.take(19) ?: "Sin sincronizar"}",color=Color(0xFFD2E5D6),fontSize=11.sp)
+            Text("Última sincronización: ${ruta?.ultimaSincronizacion?.let(::fechaLocal) ?: "Sin sincronizar"}",color=Color(0xFFD2E5D6),fontSize=11.sp)
         } } }
         item { OutlinedTextField(busqueda,{vm.busqueda.value=it},placeholder={Text("Buscar empresa o dirección")},modifier=Modifier.fillMaxWidth(),singleLine=true,shape=RoundedCornerShape(14.dp)) }
         if(puntos.isEmpty()) item { Text(if(busy) "Consultando tu ruta…" else "No hay puntos para mostrar. Comprueba la fecha o sincroniza.",Modifier.padding(vertical=20.dp),color=Color(0xFF617569)) }
@@ -110,7 +111,7 @@ import pe.upeu.ecorecicla.domain.model.*
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text(p.material,fontWeight=FontWeight.Bold); Etiqueta(if(p.pendiente) "Pendiente de envío" else if(p.estado is EstadoPesaje.Anulado) "Anulado" else "Sincronizado") }
             Text(if(p.pendiente) "Neto estimado: ${p.pesoBruto-p.tara} kg" else "${p.pesoNeto} kg netos",fontWeight=FontWeight.Bold,fontSize=20.sp)
             Text("Bruto ${p.pesoBruto} kg  ·  Tara ${p.tara} kg",fontSize=12.sp)
-            Text("ID ${p.id} · ${p.fechaHora.replace('T',' ').take(19)}",fontSize=11.sp,color=Color(0xFF617569)); Text("Registrado por ${p.operario}",fontSize=11.sp,color=Color(0xFF617569))
+            Text("ID ${p.id} · ${fechaLocal(p.fechaHora)}",fontSize=11.sp,color=Color(0xFF617569)); Text("Registrado por ${p.operario}",fontSize=11.sp,color=Color(0xFF617569))
             if(p.observacion.isNotBlank()) Text(p.observacion,fontSize=12.sp)
             (p.estado as? EstadoPesaje.Anulado)?.let { Text("Motivo: ${it.motivo}",fontSize=12.sp,color=MaterialTheme.colorScheme.error) }
             p.errorSincronizacion?.let { Text(it,color=MaterialTheme.colorScheme.error,fontSize=12.sp) }
@@ -146,7 +147,7 @@ import pe.upeu.ecorecicla.domain.model.*
             Text("Último resultado",fontWeight=FontWeight.Bold)
             Text("Enviados: ${result?.enviados ?: 0}")
             Text("Recibidos: ${result?.recibidos ?: 0}")
-            Text("Última sincronización: ${ruta?.ultimaSincronizacion ?: "Sin sincronizar"}",fontSize=12.sp)
+            Text("Última sincronización: ${ruta?.ultimaSincronizacion?.let(::fechaLocal) ?: "Sin sincronizar"}",fontSize=12.sp)
             Text(if(vm.hayPendientes()) "Hay operaciones pendientes de envío" else "No hay operaciones pendientes",fontSize=13.sp)
             result?.errores?.forEach {Text(it,fontSize=12.sp,color=MaterialTheme.colorScheme.error)}
         } }
@@ -166,3 +167,5 @@ import pe.upeu.ecorecicla.domain.model.*
     }
     if(confirmar) AlertDialog(onDismissRequest={confirmar=false},title={Text("Cerrar sesión")},text={Text(if(vm.hayPendientes()) "Hay registros sin enviar. Si sales ahora se descartarán al limpiar el equipo. Puedes cancelar y sincronizar primero." else "Se borrará la sesión y la información local de este turno.")},confirmButton={TextButton(onClick={confirmar=false;vm.salir()}) {Text(if(vm.hayPendientes()) "Descartar y salir" else "Salir")}},dismissButton={TextButton(onClick={confirmar=false}) {Text("Cancelar")}})
 }
+
+private fun fechaLocal(iso: String): String = runCatching { Instant.parse(iso).toLocalDateTime(TimeZone.of("America/Lima")).toString().replace('T',' ').take(19)+" · Lima" }.getOrDefault(iso)

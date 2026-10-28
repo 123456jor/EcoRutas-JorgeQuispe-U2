@@ -43,6 +43,7 @@ kotlin {
             implementation(libs.ktor.client.mock)
         }
         jvmTest.dependencies { implementation("app.cash.sqldelight:sqlite-driver:2.1.0") }
+        getByName("androidHostTest").dependencies { implementation("app.cash.sqldelight:sqlite-driver:2.1.0") }
     }
 }
 sqldelight { databases { create("EcoDatabase") { packageName.set("pe.upeu.ecorecicla.db") } } }
