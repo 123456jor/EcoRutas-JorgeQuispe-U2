@@ -57,6 +57,11 @@ class EcoOfflineTest {
         val guardado=local.q.pesaje(uno).executeAsOne()
         assertTrue(guardado.pendiente);assertEquals(30.0,guardado.pesoBruto);assertEquals(0.0,guardado.pesoNeto)
         assertTrue(api.eventos.isEmpty());assertEquals(2,local.q.operaciones().executeAsList().size)
+        // Un pesaje histórico conserva su ruta aunque solo esté cacheada la ruta actual.
+        local.guardar(PesajeDto(200,7,1,"2026-10-28T12:00:00Z","Cartón",30.0,2.0,28.0,"operario1","REGISTRADO"))
+        repo.guardar(FormularioPesaje(7,1,"Cartón",40.0,2.0),200)
+        val historica=kotlinx.serialization.json.Json.decodeFromString<EscrituraPesajeDto>(local.q.operaciones().executeAsList().last().payload)
+        assertEquals(7L,historica.rutaId);assertEquals(7L,local.q.pesaje(200).executeAsOne().rutaId)
     }
     @Test fun sincronizacionSubeAntesDeDescargarYSustituyeEnTransaccion()=runTest {
         repo.guardar(form());val result=repo.sincronizar("2026-10-28")

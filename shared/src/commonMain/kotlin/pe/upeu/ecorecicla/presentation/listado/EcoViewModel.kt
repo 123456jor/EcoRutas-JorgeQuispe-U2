@@ -27,6 +27,7 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     val formulario=MutableStateFlow(FormularioUi())
     val resumen=MutableStateFlow<ResumenSync?>(null)
     private var editandoId: Long?=null
+    private var editandoRutaId: Long?=null
     init {
         gestor.restaurar()
         viewModelScope.launch {
@@ -56,7 +57,7 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     fun sincronizar()=ejecutar { resumen.value=sync(fecha.value); mensaje.value=resumen.value!!.errores.firstOrNull() ?: "Sincronización completada" }
     fun abrir(punto: PuntoAcopio) { seleccionado.value=punto; pantalla.value="detalle"; mensaje.value=null }
     fun formulario(pesaje: Pesaje?=null) {
-        editandoId=pesaje?.id
+        editandoId=pesaje?.id; editandoRutaId=pesaje?.rutaId
         formulario.value=pesaje?.let { FormularioUi(it.material,it.pesoBruto.toString(),it.tara.toString(),it.observacion) } ?: FormularioUi(material=seleccionado.value?.materialHabitual.orEmpty())
         mensaje.value=null; pantalla.value="formulario"
     }
@@ -65,7 +66,7 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     } }
     fun guardar()=ejecutar {
         val f=formulario.value; val r=ruta.value ?: return@ejecutar; val punto=seleccionado.value ?: return@ejecutar
-        val data=FormularioPesaje(r.id,punto.id,f.material,f.bruto.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.tara.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.observacion)
+        val data=FormularioPesaje(editandoRutaId ?: r.id,punto.id,f.material,f.bruto.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.tara.replace(',','.').toDoubleOrNull() ?: Double.NaN,f.observacion)
         editandoId=repo.guardar(data,editandoId)
         var pendiente=true
         if(conectado.value) {
