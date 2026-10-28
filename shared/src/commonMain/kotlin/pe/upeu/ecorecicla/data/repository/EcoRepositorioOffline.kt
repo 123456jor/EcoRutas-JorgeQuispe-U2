@@ -14,6 +14,7 @@ class EcoRepositorioOffline(private val local: BaseLocal,private val api: EcoApi
     override fun observarRuta(): Flow<Ruta?> = local.rutas().map { rows -> rows.firstOrNull()?.let { Ruta(it.id,it.fecha,it.estado,emptyList(),it.ultimaSync) } }
     override fun observarPuntos(ruta: Long,busqueda: String,soloPendientes: Boolean)=local.puntos(ruta,busqueda,soloPendientes)
     override fun observarPesajes(punto: Long)=local.pesajes(punto)
+    override fun observarPendientes(ruta: Long)=local.pendientes(ruta)
     override fun tienePendientes()=q.operaciones().executeAsList().isNotEmpty()
     private fun vigente() {
         val token=sesion.token()

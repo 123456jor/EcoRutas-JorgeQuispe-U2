@@ -24,6 +24,7 @@ class EcoViewModel(private val repo: EcoRepositorio,private val api: EcoApi,priv
     val soloPendientes=MutableStateFlow(false)
     val puntos=combine(ruta,busqueda,soloPendientes) { r,b,s -> Triple(r?.id,b,s) }.flatMapLatest { (id,b,s) -> if(id==null) flowOf(emptyList()) else repo.observarPuntos(id,b,s) }.stateIn(viewModelScope,SharingStarted.Eagerly,emptyList())
     val seleccionado=MutableStateFlow<PuntoAcopio?>(null)
+    val pendientes=ruta.flatMapLatest { r -> if(r==null) flowOf(0L) else repo.observarPendientes(r.id) }.stateIn(viewModelScope,SharingStarted.Eagerly,0L)
     val pesajes=seleccionado.flatMapLatest { p -> if(p==null) flowOf(emptyList()) else repo.observarPesajes(p.id) }.stateIn(viewModelScope,SharingStarted.Eagerly,emptyList())
     val formulario=MutableStateFlow(FormularioUi())
     val resumen=MutableStateFlow<ResumenSync?>(null)

@@ -55,6 +55,14 @@ class EcoOfflineTest {
         assertNull(local.q.pesaje(id).executeAsOneOrNull())
         assertEquals(12.5,repo.observarPesajes(1).first().single().humedadEstimada)
     }
+    @Test fun distintivoCuentaPesajesUnicosYSeVaciaAlSincronizar()=runTest {
+        assertEquals(0L,repo.observarPendientes(1).first())
+        val id=repo.guardar(form());repo.guardar(form(40.0),id)
+        assertEquals(1L,repo.observarPendientes(1).first())
+        assertEquals(0L,repo.observarPendientes(999).first())
+        repo.sincronizar("2026-10-28")
+        assertEquals(0L,repo.observarPendientes(1).first())
+    }
     @Test fun conversionDtoConservaAnulacion() {
         val p=PesajeDto(5,1,1,"2026-10-28T12:00:00Z","Cartón",30.0,2.0,28.0,"operario1","ANULADO","Duplicado").dominio()
         assertEquals(EstadoPesaje.Anulado("Duplicado"),p.estado);assertEquals(28.0,p.pesoNeto);assertFalse(p.pendiente)

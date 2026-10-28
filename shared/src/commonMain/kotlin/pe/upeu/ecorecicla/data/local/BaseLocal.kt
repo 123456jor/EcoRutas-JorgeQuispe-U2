@@ -1,6 +1,7 @@
 package pe.upeu.ecorecicla.data.local
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOne
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import pe.upeu.ecorecicla.db.*
@@ -8,6 +9,7 @@ import pe.upeu.ecorecicla.domain.model.*
 import pe.upeu.ecorecicla.data.remote.dto.*
 class BaseLocal(val database: EcoDatabase) {
     val q=database.ecoQueries
+    fun pendientes(ruta: Long)=q.contarPendientes(ruta).asFlow().mapToOne(Dispatchers.Default)
     fun rutas()=q.rutas().asFlow().mapToList(Dispatchers.Default)
     fun puntos(ruta: Long,busqueda: String,soloPendientes: Boolean)=q.puntos(ruta,busqueda,if(soloPendientes) 1L else 0L).asFlow().mapToList(Dispatchers.Default).map { rows -> rows.map { PuntoAcopio(it.id,it.razonSocial,it.direccion,it.zona,it.materialHabitual,it.secuencia.toInt(),it.atendido,it.motivoOmision) } }
     fun pesajes(punto: Long)=q.pesajes(punto).asFlow().mapToList(Dispatchers.Default).map { rows -> rows.map { it.dominio() } }

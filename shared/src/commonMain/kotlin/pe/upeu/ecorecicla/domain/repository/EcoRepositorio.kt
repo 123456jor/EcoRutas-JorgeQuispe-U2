@@ -5,6 +5,7 @@ data class ResumenSync(val enviados: Int,val recibidos: Int,val errores: List<St
 interface EcoRepositorio {
     fun observarRuta(): Flow<Ruta?>
     fun observarPuntos(ruta: Long,busqueda: String,soloPendientes: Boolean = false): Flow<List<PuntoAcopio>>
+    fun observarPendientes(ruta: Long): Flow<Long>
     fun observarPesajes(punto: Long): Flow<List<Pesaje>>
     suspend fun guardar(p: FormularioPesaje,id: Long? = null): Long
     suspend fun sincronizar(fecha: String): ResumenSync
